@@ -1,0 +1,21 @@
+# --- PYTHON BACKEND ---
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/.env
+backend/.pytest_cache/
+*.egg-info/
+
+# --- REACT FRONTEND ---
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env.local
+frontend/npm-debug.log
+frontend/yarn-error.log
+
+# --- IDE & OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

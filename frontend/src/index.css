@@ -1,0 +1,48 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  /* PALET WARNA BARU */
+  --color-cream: #FFFD8F;    /* Background Utama */
+  --color-sage: #B0CE88;     /* Border / Aksen lembut */
+  --color-leaf: #4C763B;     /* Primary Button / Highlight */
+  --color-forest: #043915;   /* Navbar / Text Utama */
+  
+  /* Semantic Mapping */
+  --primary: var(--color-leaf);
+  --primary-hover: var(--color-forest);
+  
+  --bg-body: #FFFDE7; /* Versi sedikit lebih lembut dari #FFFD8F agar tidak terlalu silau di mata */
+  --bg-surface: #FFFFFF;
+  
+  --text-main: var(--color-forest);
+  --text-secondary: #3d5c30; /* Hijau pudar */
+  
+  --border: var(--color-sage);
+  
+  /* Status */
+  --success-bg: #dcfce7;
+  --success-text: #14532d;
+  --error-bg: #fee2e2;
+  --error-text: #991b1b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; /* Font modern */
+  background-color: var(--color-cream); /* Menggunakan warna Cream user */
+  background-image: linear-gradient(to bottom, #FFFD8F 0%, #fefce8 100%); /* Gradasi halus agar tidak flat */
+  color: var(--text-main);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font-family: inherit; }
+
+/* Scrollbar hijau */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--color-cream); }
+::-webkit-scrollbar-thumb { background: var(--color-sage); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-leaf); }
