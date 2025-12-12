@@ -61,7 +61,7 @@ pip install -r requirements.txt
 
 *(Catatan: Pastikan library `pyramid`, `waitress`, `sqlalchemy`, `psycopg2-binary`, `google-generativeai`, `huggingface_hub`, `python-dotenv`, `wsgicors` terinstall)*
 
-Buat file `.env` di dalam folder `backend/` dan isi konfigurasi berikut:
+Buat file `.env` di dalam folder `backend/` dan isi konfigurasi berikut:(gunakan database, token, dan key akun anda karena ini cuma contoh)
 
 ```env
 DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
