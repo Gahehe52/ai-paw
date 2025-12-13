@@ -113,3 +113,14 @@ ai-paw/
     │   └── index.css     # Global Styles (Theme Variables)
     └── package.json
 ```
+
+## Screenshot
+
+Berikut beberapa screenshot hasil menjalankan web.  
+<img src="Screenshot/SS1.png">
+<img src="Screenshot/SS2.png">
+<img src="Screenshot/SS3.png">
+<img src="Screenshot/SS4.png">
+<img src="Screenshot/SS5.png">
+
+-----
