@@ -1,22 +1,19 @@
 from pyramid.view import view_config
 import google.generativeai as genai
+import requests
+import time
 import json
 import os
 from dotenv import load_dotenv
 from models import Review, DBSession
-from huggingface_hub import InferenceClient # Gunakan library ini!
 
 load_dotenv()
 
-# --- KONFIGURASI AI ---
+# --- KONFIGURASI API ---
 HF_TOKEN = os.getenv('HF_API_TOKEN')
 GEMINI_KEY = os.getenv('GEMINI_API_KEY')
 
-# Inisialisasi Client Hugging Face
-# Library ini otomatis menangani URL baru (router.huggingface.co)
-# Pastikan token Anda valid di .env
-hf_client = InferenceClient(api_key=HF_TOKEN)
-
+# Konfigurasi Gemini
 if GEMINI_KEY:
     try:
         genai.configure(api_key=GEMINI_KEY)
@@ -24,36 +21,64 @@ if GEMINI_KEY:
         pass
 
 def call_huggingface_sentiment(text):
-    """Step 1: Sentiment Analysis via Hugging Face Library"""
+    """
+    Step 1: Sentiment Analysis menggunakan requests manual
+    Diadaptasi dari kode referensi ai_services.py yang berhasil.
+    """
     if not HF_TOKEN:
         print("❌ HF Token Missing")
         return {"label": "CFG_ERR", "score": 0.0}
 
+    # Gunakan Model & URL dari referensi yang terbukti jalan
+    model_id = "cardiffnlp/twitter-roberta-base-sentiment-latest"
+    API_URL = f"https://router.huggingface.co/hf-inference/models/{model_id}"
+    headers = {"Authorization": f"Bearer {HF_TOKEN}"}
+
+    print(f"📡 Sending to HF ({model_id})...")
+
     try:
-        # Gunakan model standar DistilBERT yang stabil
-        model_id = "distilbert-base-uncased-finetuned-sst-2-english"
+        # Request Pertama
+        response = requests.post(API_URL, headers=headers, json={"inputs": text})
         
-        print(f"Sending to HF Library ({model_id})...")
+        # Handle Cold Boot (Error 503) - Tunggu & Coba lagi
+        if response.status_code == 503:
+            print("⏳ Model sedang loading (Cold Boot)... Menunggu 5 detik...")
+            time.sleep(5)
+            response = requests.post(API_URL, headers=headers, json={"inputs": text})
+
+        if response.status_code != 200:
+            print(f"❌ HF Error {response.status_code}: {response.text}")
+            return {"label": "API_ERR", "score": 0.0}
+
+        result = response.json()
         
-        # Panggil API menggunakan library resmi (Bukan requests manual)
-        result = hf_client.text_classification(text, model=model_id)
-        
-        # Result dari library formatnya lebih rapi objek (bukan JSON mentah)
-        # Ambil hasil pertama (confidence tertinggi)
-        top_result = result[0]
-        
-        return {
-            "label": top_result.label.upper(), 
-            "score": top_result.score
-        }
+        # Parsing hasil model Roberta (List of List of Dicts)
+        # Contoh: [[{'label': 'positive', 'score': 0.9}, {'label': 'negative', 'score': 0.1}]]
+        if isinstance(result, list) and len(result) > 0:
+            # Ambil list skor pertama
+            scores = result[0] 
+            
+            # Cari label dengan score tertinggi
+            top_result = max(scores, key=lambda x: x['score'])
+            label_raw = top_result['label']
+            score = top_result['score']
+            
+            # Mapping label agar seragam (huruf besar)
+            if label_raw == "positive": 
+                final_label = "POSITIVE"
+            elif label_raw == "negative": 
+                final_label = "NEGATIVE"
+            else: 
+                final_label = "NEUTRAL"
+            
+            print(f"✅ HF Success: {final_label} ({score:.2f})")
+            return {"label": final_label, "score": score}
+
+        return {"label": "UNKNOWN", "score": 0.0}
 
     except Exception as e:
-        print(f"❌ HF Error: {str(e)}")
-        # Cek jika error 503 (Model Loading)
-        if "503" in str(e) or "loading" in str(e).lower():
-            return {"label": "LOADING...", "score": 0.0}
-        
-        return {"label": "API_ERR", "score": 0.0}
+        print(f"❌ HF Exception: {str(e)}")
+        return {"label": "CONN_ERR", "score": 0.0}
 
 def extract_key_points_gemini(text):
     """Step 2: Extract Key Points via Gemini"""
@@ -72,6 +97,7 @@ def extract_key_points_gemini(text):
             return ["No analysis returned"]
 
         cleaned_text = response.text.strip()
+        # Bersihkan markdown ```json jika ada
         if cleaned_text.startswith("```"):
             cleaned_text = cleaned_text.split("```")[1]
             if cleaned_text.startswith("json"):
@@ -80,6 +106,7 @@ def extract_key_points_gemini(text):
         return json.loads(cleaned_text.strip())
     except Exception as e:
         print(f"❌ Gemini Exception: {str(e)}")
+        # Return fallback jika gagal agar frontend tidak crash
         return ["Failed to extract points"]
 
 @view_config(route_name='analyze_review', request_method='POST', renderer='json')
